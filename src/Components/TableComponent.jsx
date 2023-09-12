@@ -6,6 +6,7 @@ import { Box, Tooltip } from "@mui/material";
 import { getProductData, getServiceData } from "../api";
 import { InputComponent } from "./InputComponent";
 import { CheckboxComponent } from "./CheckboxComponent";
+import UserDialogComponent from "./UserDialogComponent";
 
 export const TableComponent = ({ type, setAlert }) => {
     const [loading, setLoading] = useState(false);
@@ -22,7 +23,10 @@ export const TableComponent = ({ type, setAlert }) => {
     const [columnFilters, setColumnFilters] = useState([]);
     const [globalFilter, setGlobalFilter] = useState("");
 
-    const onChangeField = () => {};
+    const onChangeField = (id, value, field) => {
+        const storageItems = JSON.parse(sessionStorage.getItem("editFields"));
+        const findItem = storageItems.find((el) => el.id === id);
+    };
     const onCheckedField = () => {};
 
     const setFetchType = async (params) => {
@@ -50,7 +54,7 @@ export const TableComponent = ({ type, setAlert }) => {
                     onChangeField={onChangeField}
                     id={row.id}
                     label="Штрих-код"
-                    fields="barcode"
+                    field="barcode"
                 />
             ),
             "package_w_b_extended_attr": (
@@ -59,7 +63,7 @@ export const TableComponent = ({ type, setAlert }) => {
                     onChangeField={onChangeField}
                     id={row.id}
                     label="Артикул"
-                    fields="package_w_b_extended_attr"
+                    field="package_w_b_extended_attr"
                 />
             ),
             "product_price": (
@@ -68,7 +72,7 @@ export const TableComponent = ({ type, setAlert }) => {
                     onChangeField={onChangeField}
                     id={row.id}
                     label="Цена без НДС, BYN"
-                    fields="product_price"
+                    field="product_price"
                 />
             ),
             "product_vat": (
@@ -77,16 +81,18 @@ export const TableComponent = ({ type, setAlert }) => {
                     onChangeField={onChangeField}
                     id={row.id}
                     label="НДС, %"
-                    fields="product_vat"
+                    field="product_vat"
                 />
             ),
             "description": (
-                <InputComponent
+                <UserDialogComponent
+                    openDialogText={row.description}
                     defaultValue={row.description}
-                    onChangeField={onChangeField}
+                    agreeActionFunc={onChangeField}
                     id={row.id}
-                    label="Описание"
-                    fields="description"
+                    field="description"
+                    agreeActionText='Сохранить'
+                    desAgreeActionText="Отмена"
                 />
             ),
             "free_price": (
@@ -94,7 +100,7 @@ export const TableComponent = ({ type, setAlert }) => {
                     id={row.id}
                     defaultValue={row.free_price !== "0"}
                     onCheckedField={onCheckedField}
-                    fields="free_price"
+                    field="free_price"
                 />
             ),
             "fill_weight": (
@@ -102,7 +108,7 @@ export const TableComponent = ({ type, setAlert }) => {
                     id={row.id}
                     defaultValue={row.fill_weight !== "0"}
                     onCheckedField={onCheckedField}
-                    fields="fill_weight"
+                    field="fill_weight"
                 />
             ),
         }));

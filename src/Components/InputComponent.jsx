@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { TextField } from "@mui/material";
 
-export const InputComponent = ({ defaultValue, onChangeField, id, label, fields }) => {
+export const InputComponent = ({ defaultValue, onChangeField, id, label, field }) => {
     const [value, setValue] = useState(defaultValue);
     const onChange = (value) => {
         setValue(value);
-        onChangeField(id, value, fields)
+        onChangeField(id, value, field)
     };
 
     return (
