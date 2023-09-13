@@ -25,7 +25,14 @@ export const TableComponent = ({ type, setAlert }) => {
 
     const onChangeField = (id, value, field) => {
         const storageItems = JSON.parse(sessionStorage.getItem("editFields"));
-        const findItem = storageItems.find((el) => el.id === id);
+        const newItems = storageItems.map((el) => {
+            if (el.id === id) {
+                const item = el;
+                item[field] = value;
+            }
+            return el;
+        });
+        sessionStorage.setItem("editFields", JSON.stringify([...newItems]));
     };
     const onCheckedField = () => {};
 
@@ -41,6 +48,7 @@ export const TableComponent = ({ type, setAlert }) => {
     };
 
     const setRenderRows = ({ columns, rows, totalRecords }) => {
+        sessionStorage.setItem("editFields", JSON.stringify([...rows]));
         const custom_rows = rows?.map((row) => ({
             ...row,
             "rus_name": (
