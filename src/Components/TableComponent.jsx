@@ -8,7 +8,7 @@ import { InputComponent } from "./InputComponent";
 import { CheckboxComponent } from "./CheckboxComponent";
 import UserDialogComponent from "./UserDialogComponent";
 
-export const TableComponent = ({ type, setAlert }) => {
+export const TableComponent = ({ type, setAlert, setParams }) => {
     const [loading, setLoading] = useState(false);
     const [columns, setColumns] = useState([]);
     const [rows, setRows] = useState([]);
@@ -23,18 +23,44 @@ export const TableComponent = ({ type, setAlert }) => {
     const [columnFilters, setColumnFilters] = useState([]);
     const [globalFilter, setGlobalFilter] = useState("");
 
+    const [edited_rows, setEdited_rows] = useState([]);
+
     const onChangeField = (id, value, field) => {
         const storageItems = JSON.parse(sessionStorage.getItem("editFields"));
         const newItems = storageItems.map((el) => {
-            if (el.id === id) {
+            if (el.edit === id) {
                 const item = el;
                 item[field] = value;
+                if (field === "product_price" || field === "product_vat") {
+                    item["vat_sum"] = String(Number(item["product_price"]) * (Number(item["product_vat"]) / 100));
+                    setRows((prev) => {
+                        const newRows = prev.map((row) => {
+                            if (row.edit === id) {
+                                return {
+                                    ...row,
+                                    "vat_sum": item["vat_sum"],
+                                };
+                            }
+                            return row;
+                        });
+                        return newRows;
+                    });
+                }
+                return item;
             }
             return el;
         });
+        setEdited_rows([...newItems]);
+        setParams({
+            filters: columnFilters,
+            sorting,
+            take: pagination.pageSize,
+            skip: pagination.pageSize * (pagination.page - 1),
+            searchText: globalFilter,
+            edited_rows: [...newItems],
+        });
         sessionStorage.setItem("editFields", JSON.stringify([...newItems]));
     };
-    const onCheckedField = () => {};
 
     const setFetchType = async (params) => {
         switch (type) {
@@ -48,6 +74,7 @@ export const TableComponent = ({ type, setAlert }) => {
     };
 
     const setRenderRows = ({ columns, rows, totalRecords }) => {
+        setEdited_rows([...rows])
         sessionStorage.setItem("editFields", JSON.stringify([...rows]));
         const custom_rows = rows?.map((row) => ({
             ...row,
@@ -60,7 +87,7 @@ export const TableComponent = ({ type, setAlert }) => {
                 <InputComponent
                     defaultValue={row.barcode}
                     onChangeField={onChangeField}
-                    id={row.id}
+                    id={row.edit}
                     label="Штрих-код"
                     field="barcode"
                 />
@@ -69,7 +96,7 @@ export const TableComponent = ({ type, setAlert }) => {
                 <InputComponent
                     defaultValue={row.package_w_b_extended_attr}
                     onChangeField={onChangeField}
-                    id={row.id}
+                    id={row.edit}
                     label="Артикул"
                     field="package_w_b_extended_attr"
                 />
@@ -78,7 +105,7 @@ export const TableComponent = ({ type, setAlert }) => {
                 <InputComponent
                     defaultValue={row.product_price}
                     onChangeField={onChangeField}
-                    id={row.id}
+                    id={row.edit}
                     label="Цена без НДС, BYN"
                     field="product_price"
                 />
@@ -87,7 +114,7 @@ export const TableComponent = ({ type, setAlert }) => {
                 <InputComponent
                     defaultValue={row.product_vat}
                     onChangeField={onChangeField}
-                    id={row.id}
+                    id={row.edit}
                     label="НДС, %"
                     field="product_vat"
                 />
@@ -97,7 +124,7 @@ export const TableComponent = ({ type, setAlert }) => {
                     openDialogText={row.description}
                     defaultValue={row.description}
                     agreeActionFunc={onChangeField}
-                    id={row.id}
+                    id={row.edit}
                     field="description"
                     agreeActionText='Сохранить'
                     desAgreeActionText="Отмена"
@@ -105,17 +132,17 @@ export const TableComponent = ({ type, setAlert }) => {
             ),
             "free_price": (
                 <CheckboxComponent
-                    id={row.id}
+                    id={row.edit}
                     defaultValue={row.free_price !== "0"}
-                    onCheckedField={onCheckedField}
+                    onChangeField={onChangeField}
                     field="free_price"
                 />
             ),
             "fill_weight": (
                 <CheckboxComponent
-                    id={row.id}
+                    id={row.edit}
                     defaultValue={row.fill_weight !== "0"}
-                    onCheckedField={onCheckedField}
+                    onChangeField={onChangeField}
                     field="fill_weight"
                 />
             ),
@@ -126,6 +153,10 @@ export const TableComponent = ({ type, setAlert }) => {
     };
 
     const fetchDate = async (params) => {
+        setParams({
+            ...params,
+            edited_rows: [],
+        });
         setLoading(true);
         setRows([]);
         const data = await setFetchType(params);
@@ -141,6 +172,7 @@ export const TableComponent = ({ type, setAlert }) => {
           take: pagination.pageSize,
           skip: pagination.pageSize * (pagination.page - 1),
           searchText: globalFilter,
+          edited_rows: edited_rows,
         });
     }, [
         pagination.pageSize,

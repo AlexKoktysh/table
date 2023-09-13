@@ -22,3 +22,10 @@ export const getServiceData = async (params) => {
     const response = await instance.post("/service_list", { ...params });
     return response;
 };
+
+export const generateProductData = async () => {
+    return await instance.post("/generate_product_data");
+};
+export const generateServiceData = async () => {
+    return await instance.post("/generate_service_data");
+};
