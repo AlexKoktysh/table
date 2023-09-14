@@ -73,16 +73,19 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
         }
     };
 
+    const renderNameField = (renderedCellValue) => {
+        return (
+            <Tooltip title={renderedCellValue}>
+                <span>{renderedCellValue}</span>
+            </Tooltip>
+        );
+    };
+
     const setRenderRows = ({ columns, rows, totalRecords }) => {
         setEdited_rows([...rows])
         sessionStorage.setItem("editFields", JSON.stringify([...rows]));
         const custom_rows = rows?.map((row) => ({
             ...row,
-            "rus_name": (
-                <Tooltip title={row.rus_name}>
-                    <span>{row.rus_name}</span>
-                </Tooltip>
-            ),
             "barcode": (
                 <InputComponent
                     defaultValue={row.barcode}
@@ -148,7 +151,16 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
             ),
         }));
         setRows(custom_rows);
-        setColumns(columns);
+        const custom_columns = columns.map((column) => {
+            if (column.accessorKey === "rus_name") {
+                return {
+                    ...column,
+                    Cell: ({ renderedCellValue }) => renderNameField(renderedCellValue),
+                };
+            }
+            return column;
+        });
+        setColumns(custom_columns);
         setTotalRecords(totalRecords);
     };
 
@@ -211,6 +223,9 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
                     width: "100%",
                     className: "pagination",
                     ActionsComponent: () => PaginationComponent({ setPagination, pagination, totalRecords })
+                }}
+                filterFns={{
+                    customProductPriceFilterFn: (row, id, filterValue) => {}
                 }}
             />
         </Box>
