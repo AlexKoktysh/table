@@ -3,9 +3,24 @@ import { TextField } from "@mui/material";
 
 export const InputComponent = ({ defaultValue, onChangeField, id, label, field }) => {
     const [value, setValue] = useState(defaultValue);
+
+    const replaceComma = (value) => {
+        return value.replace(/,/, ".");
+    };
+    const roundingInteger = (value) => {
+        return String(Number(replaceComma(value)).toFixed(0)) || value;
+    };
+
     const onChange = (value) => {
-        setValue(value);
-        onChangeField(id, value, field)
+        let newValue = value;
+        if (field === "product_price" || field === "product_vat") {
+            newValue = replaceComma(value);
+        }
+        if (field === "product_vat") {
+            newValue = roundingInteger(value);
+        }
+        setValue(newValue);
+        onChangeField(id, newValue, field)
     };
 
     return (

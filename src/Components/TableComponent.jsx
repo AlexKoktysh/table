@@ -32,13 +32,13 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
                 const item = el;
                 item[field] = value;
                 if (field === "product_price" || field === "product_vat") {
-                    item["vat_sum"] = String(Number(item["product_price"]) * (Number(item["product_vat"]) / 100));
+                    item["vat_sum"] = Number(item["product_price"]) * (Number(item["product_vat"]) / 100);
                     setRows((prev) => {
                         const newRows = prev.map((row) => {
                             if (row.edit === id) {
                                 return {
                                     ...row,
-                                    "vat_sum": item["vat_sum"],
+                                    "vat_sum": String(item["vat_sum"].toFixed(2)),
                                 };
                             }
                             return row;
