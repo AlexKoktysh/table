@@ -25,20 +25,53 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
 
     const [edited_rows, setEdited_rows] = useState([]);
 
+    const [greenRows, setGreenRows] = useState([]);
+    const [items, setItems] = useState([]);
+
+    const handlerChangeProductPrice = (item) => {
+        return Number(item["product_price"]) * Number(item["product_vat"]) / (100 + Number(item["product_vat"]));
+    };
+    const handlerChangeProductVat = (item) => {
+        const product_price = Number(item.clean_price) * (1 + Number(item.product_vat) / 100);
+        const vat_sum = (Number(item["product_price"]) * Number(item["product_vat"])) / (100 + Number(item["product_vat"]));
+        return { product_price, vat_sum };
+    };
+
     const onChangeField = (id, value, field) => {
         const storageItems = JSON.parse(sessionStorage.getItem("editFields"));
         const newItems = storageItems.map((el) => {
             if (el.edit === id) {
                 const item = el;
                 item[field] = value;
-                if (field === "product_price" || field === "product_vat") {
-                    item["vat_sum"] = Number(item["product_price"]) * (Number(item["product_vat"]) / 100);
+                if (field === "product_price") {
                     setRows((prev) => {
                         const newRows = prev.map((row) => {
                             if (row.edit === id) {
                                 return {
                                     ...row,
-                                    "vat_sum": String(item["vat_sum"].toFixed(2)),
+                                    "vat_sum": String(handlerChangeProductPrice(item).toFixed(2)),
+                                };
+                            }
+                            return row;
+                        });
+                        return newRows;
+                    });
+                }
+                if (field === "product_vat") {
+                    const { product_price, vat_sum } = handlerChangeProductVat(item);
+                    setRows((prev) => {
+                        const newRows = prev.map((row) => {
+                            if (row.edit === id) {
+                                return {
+                                    ...row,
+                                    product_price: {
+                                        ...row.product_price,
+                                        props: {
+                                            ...row.product_price.props,
+                                            defaultValue: product_price.toFixed(2),
+                                        },
+                                    },
+                                    vat_sum: String(vat_sum.toFixed(2)),
                                 };
                             }
                             return row;
@@ -82,6 +115,11 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
     };
 
     const setRenderRows = ({ columns, rows, totalRecords }) => {
+        const green = rows.map((row) => {
+            if (row.already_export) {
+                return row.id;
+            }
+        });
         setEdited_rows([...rows])
         sessionStorage.setItem("editFields", JSON.stringify([...rows]));
         const custom_rows = rows?.map((row) => ({
@@ -109,7 +147,7 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
                     defaultValue={row.product_price}
                     onChangeField={onChangeField}
                     id={row.edit}
-                    label="Цена без НДС, BYN"
+                    label="Цена с НДС, BYN"
                     field="product_price"
                 />
             ),
@@ -151,6 +189,7 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
             ),
         }));
         setRows(custom_rows);
+        setGreenRows(green);
         const custom_columns = columns.map((column) => {
             if (column.accessorKey === "rus_name") {
                 return {
@@ -165,6 +204,7 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
     };
 
     const fetchDate = async (params) => {
+        setItems([]);
         setParams({
             ...params,
             edited_rows: [],
@@ -193,6 +233,20 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
         columnFilters,
         globalFilter,
     ]);
+    useEffect(() => {
+        if (!loading)
+            setTimeout(() => {
+                const tr = document.getElementsByTagName("tr");
+                setItems(tr);
+            }, 1000);
+    }, [loading]);
+    useEffect(() => {
+        greenRows.forEach((el) => {
+            if (items[el]) {
+                items[el].style.backgroundColor = "green";
+            }
+        });
+    }, [items, greenRows]);
 
     return (
         <Box style={{ height: 1200, width: "100%", overflowY: "auto" }}>
@@ -223,9 +277,6 @@ export const TableComponent = ({ type, setAlert, setParams }) => {
                     width: "100%",
                     className: "pagination",
                     ActionsComponent: () => PaginationComponent({ setPagination, pagination, totalRecords })
-                }}
-                filterFns={{
-                    customProductPriceFilterFn: (row, id, filterValue) => {}
                 }}
             />
         </Box>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TextField } from "@mui/material";
 
 export const InputComponent = ({ defaultValue, onChangeField, id, label, field }) => {
@@ -22,6 +22,10 @@ export const InputComponent = ({ defaultValue, onChangeField, id, label, field }
         setValue(newValue);
         onChangeField(id, newValue, field)
     };
+
+    useEffect(() => {
+        setValue(defaultValue);
+    }, [defaultValue]);
 
     return (
         <TextField
